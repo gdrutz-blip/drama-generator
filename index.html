@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en-CA" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Improv Scene Starter</title>
+<style>
+  :root {
+    --bg: #0b0b0f;
+    --panel: #17171f;
+    --panel-edge: #3a3a4a;
+    --text: #ffffff;
+    --muted: #c9c9d6;
+    --accent: #ffd400;
+    --accent-text: #000000;
+    --c-character: #5fd4ff;
+    --c-setting: #7dff8a;
+    --c-problem: #ff8f6b;
+    --c-twist: #e9a3ff;
+    --locked: #ffd400;
+    --danger: #ff5c5c;
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff;
+    --panel: #f2f2f5;
+    --panel-edge: #1a1a1a;
+    --text: #000000;
+    --muted: #2b2b2b;
+    --accent: #0033cc;
+    --accent-text: #ffffff;
+    --c-character: #005a8c;
+    --c-setting: #0b6b1a;
+    --c-problem: #a12a00;
+    --c-twist: #6a1b8a;
+    --locked: #0033cc;
+    --danger: #b00000;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: clamp(10px, 1.4vw, 28px);
+    gap: clamp(10px, 1.2vw, 22px);
+  }
+  button {
+    font: inherit;
+    cursor: pointer;
+    color: var(--text);
+    background: var(--panel);
+    border: 3px solid var(--panel-edge);
+    border-radius: 12px;
+    padding: 0.35em 0.8em;
+    font-weight: 700;
+  }
+  button:hover { border-color: var(--text); }
+  button:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+  button[aria-pressed="true"].seg {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+  }
+
+  /* ---------- Top bar ---------- */
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: clamp(8px, 1vw, 18px);
+    font-size: clamp(1rem, 1.5vw, 1.8rem);
+  }
+  h1 {
+    margin: 0 auto 0 0;
+    font-size: clamp(1.4rem, 2.6vw, 3rem);
+    letter-spacing: 0.02em;
+  }
+  h1 span { color: var(--accent); }
+  .group {
+    display: inline-flex;
+    gap: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 3px solid var(--panel-edge);
+  }
+  .group button { border: 0; border-radius: 0; border-right: 3px solid var(--panel-edge); }
+  .group button:last-child { border-right: 0; }
+  .group-label {
+    font-size: 0.75em;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin-right: 0.3em;
+  }
+  .ctl { display: inline-flex; align-items: center; }
+
+  /* ---------- Main area ---------- */
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: clamp(10px, 1.2vw, 22px);
+    min-height: 0;
+  }
+  .slot {
+    background: var(--panel);
+    border: 4px solid var(--panel-edge);
+    border-radius: 20px;
+    padding: clamp(12px, 1.4vw, 28px);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    position: relative;
+  }
+  .slot.locked { border-color: var(--locked); border-style: dashed; }
+  .slot-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-size: clamp(1rem, 1.6vw, 2rem);
+  }
+  .slot-title {
+    margin: 0 auto 0 0;
+    font-size: clamp(1.3rem, 2.3vw, 2.8rem);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 900;
+  }
+  .slot[data-slot="character"] .slot-title { color: var(--c-character); }
+  .slot[data-slot="setting"] .slot-title { color: var(--c-setting); }
+  .slot[data-slot="problem"] .slot-title { color: var(--c-problem); }
+  .slot[data-slot="twist"] .slot-title { color: var(--c-twist); }
+  .slot-head button { padding: 0.25em 0.6em; }
+  .lock-btn[aria-pressed="true"] {
+    background: var(--bg);
+    color: var(--locked);
+    border-color: var(--locked);
+  }
+  .slot-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.4em;
+    min-height: 0;
+  }
+  .value {
+    font-size: clamp(1.7rem, 3.4vw, 4.4rem);
+    line-height: 1.15;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+  .value.placeholder { color: var(--muted); font-weight: 600; font-style: italic; }
+  .pair .value { font-size: clamp(1.4rem, 2.6vw, 3.4rem); }
+  .tag {
+    display: inline-block;
+    min-width: 1.6em;
+    text-align: center;
+    margin-right: 0.35em;
+    padding: 0 0.25em;
+    border-radius: 8px;
+    background: var(--c-character);
+    color: var(--bg);
+    font-weight: 900;
+  }
+  .rolling .value { opacity: 0.55; }
+
+  /* ---------- Bottom bar ---------- */
+  footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: clamp(10px, 1.4vw, 26px);
+  }
+  #spinBtn {
+    font-size: clamp(2rem, 4vw, 5rem);
+    padding: 0.15em 1.2em;
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+    border-radius: 18px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+  }
+  #spinBtn:hover { filter: brightness(1.1); }
+  .timer {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 1vw, 18px);
+    margin-left: auto;
+    font-size: clamp(1rem, 1.5vw, 1.8rem);
+    flex-wrap: wrap;
+  }
+  #timeDisplay {
+    font-size: clamp(2.6rem, 5.5vw, 7rem);
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    min-width: 3.4em;
+    text-align: center;
+    padding: 0 0.2em;
+    border-radius: 14px;
+    border: 4px solid var(--panel-edge);
+    line-height: 1.1;
+  }
+  #timeDisplay.low { color: var(--danger); border-color: var(--danger); }
+  #timeDisplay.done { background: var(--danger); color: #fff; border-color: var(--danger); animation: flash 0.8s step-end 4; }
+  @keyframes flash { 0% { background: var(--danger); color: #fff; } 50% { background: transparent; color: var(--danger); } }
+  .hint {
+    width: 100%;
+    color: var(--muted);
+    font-size: clamp(0.9rem, 1.1vw, 1.3rem);
+    text-align: center;
+  }
+  kbd {
+    border: 2px solid var(--muted);
+    border-radius: 6px;
+    padding: 0 0.35em;
+    font-family: inherit;
+    font-weight: 700;
+  }
+
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; grid-template-rows: none; }
+    .timer { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #timeDisplay.done { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎭 Improv <span>Scene Starter</span></h1>
+
+  <div class="ctl">
+    <span class="group-label" id="levelLabel">Level</span>
+    <div class="group" role="group" aria-labelledby="levelLabel">
+      <button class="seg" data-level="simple" aria-pressed="true">Simple</button>
+      <button class="seg" data-level="tricky" aria-pressed="false">Tricky</button>
+      <button class="seg" data-level="both" aria-pressed="false">Both</button>
+    </div>
+  </div>
+
+  <button id="pairBtn" class="seg" aria-pressed="false" title="Two different characters (P)">👥 Pair up</button>
+  <button id="themeBtn" title="Switch light/dark theme (L)">☀️ Light</button>
+</header>
+
+<main>
+  <section class="slot" data-slot="character" aria-live="polite">
+    <div class="slot-head">
+      <h2 class="slot-title">Character</h2>
+      <button class="respin-btn" title="Re-spin this slot (1)" aria-label="Re-spin Character">🔄</button>
+      <button class="lock-btn" aria-pressed="false" title="Lock this slot" aria-label="Lock Character">🔓</button>
+    </div>
+    <div class="slot-body"><div class="value placeholder">Press Spin!</div></div>
+  </section>
+
+  <section class="slot" data-slot="setting" aria-live="polite">
+    <div class="slot-head">
+      <h2 class="slot-title">Setting</h2>
+      <button class="respin-btn" title="Re-spin this slot (2)" aria-label="Re-spin Setting">🔄</button>
+      <button class="lock-btn" aria-pressed="false" title="Lock this slot" aria-label="Lock Setting">🔓</button>
+    </div>
+    <div class="slot-body"><div class="value placeholder">Press Spin!</div></div>
+  </section>
+
+  <section class="slot" data-slot="problem" aria-live="polite">
+    <div class="slot-head">
+      <h2 class="slot-title">Problem</h2>
+      <button class="respin-btn" title="Re-spin this slot (3)" aria-label="Re-spin Problem">🔄</button>
+      <button class="lock-btn" aria-pressed="false" title="Lock this slot" aria-label="Lock Problem">🔓</button>
+    </div>
+    <div class="slot-body"><div class="value placeholder">Press Spin!</div></div>
+  </section>
+
+  <section class="slot" data-slot="twist" aria-live="polite">
+    <div class="slot-head">
+      <h2 class="slot-title">Twist</h2>
+      <button class="respin-btn" title="Re-spin this slot (4)" aria-label="Re-spin Twist">🔄</button>
+      <button class="lock-btn" aria-pressed="false" title="Lock this slot" aria-label="Lock Twist">🔓</button>
+    </div>
+    <div class="slot-body"><div class="value placeholder">Press Spin!</div></div>
+  </section>
+</main>
+
+<footer>
+  <button id="spinBtn" title="Spin all unlocked slots (Space)">🎲 SPIN</button>
+
+  <div class="timer">
+    <div class="group" role="group" aria-label="Timer length">
+      <button class="seg" data-secs="60" aria-pressed="true">60s</button>
+      <button class="seg" data-secs="90" aria-pressed="false">90s</button>
+      <button class="seg" data-secs="120" aria-pressed="false">120s</button>
+    </div>
+    <div id="timeDisplay" role="timer" aria-live="off">1:00</div>
+    <button id="startBtn" title="Start / pause (T)">▶ Start</button>
+    <button id="resetBtn" title="Reset timer (R)">↺ Reset</button>
+  </div>
+
+  <div class="hint">
+    <kbd>Space</kbd> spin &nbsp;·&nbsp; <kbd>T</kbd> start/pause timer &nbsp;·&nbsp; <kbd>R</kbd> reset timer &nbsp;·&nbsp;
+    <kbd>1</kbd>–<kbd>4</kbd> re-spin a slot &nbsp;·&nbsp; <kbd>P</kbd> pair up &nbsp;·&nbsp; <kbd>L</kbd> light/dark
+  </div>
+</footer>
+
+<script>
+"use strict";
+
+/* =========================================================
+   PROMPT BANKS  (school-appropriate, Canadian spelling)
+   ========================================================= */
+const BANKS = {
+  character: {
+    simple: [
+      "a lifeguard who is afraid of water",
+      "a chef who has never tasted food",
+      "a very nervous magician",
+      "a robot learning to tell jokes",
+      "a grandpa who thinks he is a teenager",
+      "a superhero whose only power is folding laundry",
+      "a pirate who gets seasick",
+      "a dog walker with twelve dogs",
+      "a mail carrier who sings every delivery",
+      "a librarian who cannot stop shushing",
+      "a dentist who loves candy",
+      "a ghost who is scared of people",
+      "a very polite moose",
+      "a hockey goalie who is afraid of pucks",
+      "a weather forecaster who is always wrong",
+      "a tour guide who is completely lost",
+      "a vampire who is afraid of the dark",
+      "a zookeeper who has lost a penguin",
+      "a substitute teacher on their very first day",
+      "a game show host who forgets the questions",
+      "a news reporter who gets the giggles",
+      "a firefighter whose truck is a tricycle",
+      "a baby giant",
+      "a wizard who failed wizard school",
+      "an astronaut who is scared of heights",
+      "a cowboy who has never seen a horse",
+      "a Zamboni driver who wants to be famous",
+      "a gym teacher who hates exercise",
+      "a museum guard who talks to the statues",
+      "a talking houseplant",
+      "a beaver who is a perfectionist",
+      "a fortune teller who only predicts snacks",
+      "a prince who has never done a chore",
+      "a bus driver who gives tours of nothing",
+      "a scientist whose experiments always turn into pudding",
+      "a camp counsellor with way too much energy",
+      "a toddler who acts like a company boss",
+      "a detective who cannot find their glasses",
+      "a mime who will not stop talking",
+      "a farmer who is afraid of chickens",
+      "a mascot whose costume head is stuck",
+      "a yoga instructor who cannot sit still",
+      "a knight whose armour is too squeaky",
+      "a babysitter for a family of raccoons",
+      "an alien visiting Earth for the first time",
+      "a barber who is afraid of hair",
+      "a pilot who gets airsick",
+      "a plumber who is secretly an opera singer",
+      "a goose who thinks it is a security guard",
+      "a cashier who is way too excited about coupons",
+      "a very sleepy rooster",
+      "a principal who wants to be a student again",
+      "a snowman who wants to visit the beach",
+      "a caveperson who just discovered smartphones",
+      "a skateboarding grandma",
+      "a referee who cannot make decisions",
+      "a puppeteer whose puppet keeps telling the truth",
+      "a lost tourist with a giant map",
+      "a lighthouse keeper who is afraid of the dark",
+      "a cat who thinks it is the boss of the house",
+      "a hairdresser for poodles",
+      "a time traveller from 1885"
+    ],
+    tricky: [
+      "a spy who cannot keep a secret",
+      "a life coach whose own life is a mess",
+      "an inventor whose inventions only work when nobody is watching",
+      "a royal food taster who is a very picky eater",
+      "a GPS voice that has come to life and has opinions",
+      "a statue that only moves when nobody is looking",
+      "a perfectionist who has to run a messy bake sale",
+      "a motivational speaker who is extremely shy",
+      "a fortune cookie writer who has run out of ideas",
+      "a weather forecaster who secretly controls the weather",
+      "a translator who only speaks to animals",
+      "an architect who builds everything out of pillows",
+      "a grumpy elf on their last day before retirement",
+      "a talent show judge who loves absolutely everything",
+      "a time traveller who always arrives one minute late",
+      "an online influencer who has never been outside",
+      "a mind reader who can only read the minds of pets",
+      "a smart fridge that judges your snacks",
+      "a knight who is terrified of being brave",
+      "a museum tour guide making up every single fact",
+      "a famous actor in disguise who desperately wants to be recognized",
+      "a superhero's very tired sidekick",
+      "a voice assistant that misunderstands every request",
+      "a celebrity chef who secretly only knows how to make toast",
+      "a scientist who just shrank to the size of a mouse",
+      "an over-prepared camper carrying forty backpacks",
+      "a detective who suspects themselves",
+      "a dragon who teaches a fire-safety class",
+      "a cat with a master plan for the world's longest nap",
+      "a lawyer defending a sandwich in court",
+      "a poet who can only speak in haiku",
+      "a choir director whose choir is all ducks",
+      "a ghost trying to pass a driving test",
+      "a professional apologizer",
+      "a reality show host who narrates everything",
+      "a twin pretending to be the other twin",
+      "a dinosaur skeleton with a sore back",
+      "a robot trying very hard to seem human",
+      "a hockey commentator who commentates everyday life",
+      "a medieval knight who has time travelled to a mall food court",
+      "a magician whose tricks only work on themselves",
+      "a wise old owl who gives terrible advice"
+    ]
+  },
+  setting: {
+    simple: [
+      "a library at midnight",
+      "a cottage on a rainy day",
+      "a hockey arena",
+      "a Tim Hortons drive-thru",
+      "a crowded TTC subway car",
+      "a school cafeteria",
+      "a dentist's waiting room",
+      "a campground in the woods",
+      "a grocery store checkout",
+      "a bouncy castle",
+      "a pet shop",
+      "a bakery at 5 a.m.",
+      "a laundromat",
+      "a museum after closing",
+      "a beach in the middle of winter",
+      "a hot air balloon",
+      "a school bus on a field trip",
+      "a pizza restaurant",
+      "an elevator stuck between floors",
+      "backstage at the school talent show",
+      "a farm during a thunderstorm",
+      "a canoe on a lake",
+      "a toy store",
+      "a movie theatre",
+      "a spaceship",
+      "a castle kitchen",
+      "an outdoor skating rink",
+      "a hair salon",
+      "a vet clinic",
+      "a hardware store",
+      "a bowling alley",
+      "a treehouse",
+      "a submarine",
+      "a car wash",
+      "a ski hill",
+      "a bus stop in a snowstorm",
+      "a zoo",
+      "a water park",
+      "a garage sale",
+      "a science fair",
+      "a train station",
+      "an ice-fishing hut",
+      "gym class",
+      "a recording studio",
+      "a pumpkin patch",
+      "a lost-and-found office",
+      "an airport security line",
+      "a very fancy restaurant",
+      "a playground",
+      "a mall food court",
+      "a farmers' market",
+      "a cooking show set",
+      "a dinosaur museum",
+      "a pyjama party",
+      "a lighthouse",
+      "a snowy backyard",
+      "a public swimming pool",
+      "an arts and crafts room",
+      "an art gallery",
+      "a sugar shack in spring",
+      "a hockey team's dressing room",
+      "a gas station in the middle of nowhere"
+    ],
+    tricky: [
+      "the inside of a giant's pocket",
+      "a cloud factory",
+      "a TTC streetcar that only goes backwards",
+      "the only Tim Hortons on the moon",
+      "a cottage where the dock just floated away",
+      "a hockey arena where the ice has turned to jelly",
+      "a museum where the exhibits are still being built",
+      "a castle made entirely of cheese",
+      "an underwater school",
+      "the Tooth Fairy's waiting room",
+      "a dressing room five minutes before showtime",
+      "a robot repair shop",
+      "the inside of a video game",
+      "a library where the books talk back",
+      "a time machine's waiting room",
+      "a weather station on top of a mountain",
+      "a submarine sandwich shop that is actually a submarine",
+      "a gingerbread house during a heat wave",
+      "a space station's laundry room",
+      "the lost-luggage room at the airport",
+      "a dragon's very tidy apartment",
+      "a ferry crossing in thick fog",
+      "an escape room with no clues",
+      "the North Pole's customer service desk",
+      "a grocery store where everything is the same colour",
+      "a theatre where the whole audience is pets",
+      "a hotel for retired superheroes",
+      "a zoo where the humans are the exhibit",
+      "a ski chalet during a blackout",
+      "a classroom on the last day before summer",
+      "a talk show filmed in a canoe",
+      "a bakery inside a sleeping volcano",
+      "the inside of a giant snow globe",
+      "a lighthouse that is also a pizzeria",
+      "the CN Tower lookout on a very windy day",
+      "an elevator that only goes sideways",
+      "a pyramid with a gift shop",
+      "a fairy tale castle's lost-and-found",
+      "a Parliament Hill tour that is running very late",
+      "a train across the Prairies that never stops",
+      "a drive-in movie in the pouring rain"
+    ]
+  },
+  problem: {
+    simple: [
+      "someone lost the only key",
+      "the power just went out",
+      "the birthday cake is missing",
+      "a raccoon got inside",
+      "everyone forgot their lines",
+      "the car will not start",
+      "it starts snowing indoors",
+      "someone sneezed on the birthday cake",
+      "the map is upside down",
+      "the sink will not stop running",
+      "nobody can find the TV remote",
+      "the boss arrives in five minutes",
+      "the dog ate the homework",
+      "a goose is blocking the door",
+      "the pizza order is completely wrong",
+      "someone has the hiccups and cannot stop",
+      "the Wi-Fi is down",
+      "the elevator music will not stop",
+      "someone glued their hands together",
+      "the bus left without them",
+      "the fridge is talking",
+      "there is only one chair",
+      "everyone ordered the exact same thing",
+      "the class hamster escaped",
+      "the snow is too deep to open the door",
+      "someone forgot their lunch",
+      "the paint is still wet",
+      "the zipper is stuck",
+      "someone keeps sneezing glitter",
+      "a phone fell in the soup",
+      "the canoe has a leak",
+      "the guests arrived a day early",
+      "the recipe is in another language",
+      "someone has a song stuck in their head",
+      "the camera will not stop taking photos",
+      "there is a spider on the ceiling",
+      "everyone needs the washroom at the same time",
+      "the Zamboni will not stop",
+      "the smoke alarm keeps chirping",
+      "someone dropped their retainer in the Timbits box",
+      "the pickle jar will not open",
+      "the tent keeps falling down",
+      "the instructions are missing",
+      "the clock is running backwards",
+      "a library book is thirty years overdue",
+      "someone is wearing two left boots",
+      "the coffee order is way too complicated",
+      "a balloon is stuck on the ceiling",
+      "someone forgot everyone's names",
+      "the umbrella will not close",
+      "the ice cream is melting fast",
+      "the mascot costume is way too small",
+      "the pool has been filled with pudding",
+      "the toaster keeps launching toast across the room",
+      "the dog will not stop barking",
+      "they are locked out in their pyjamas",
+      "someone's shoe is stuck in gum",
+      "the GPS keeps saying “turn left”",
+      "the class pet is missing",
+      "nobody remembers why they came here",
+      "the streetcar is stuck behind a parade"
+    ],
+    tricky: [
+      "two people both think they are in charge",
+      "someone has to deliver bad news very politely",
+      "a secret family recipe was accidentally posted online",
+      "someone promised to be in two places at the same time",
+      "everyone is pretending to know how to do something nobody knows",
+      "the guest of honour has not been invited to their own party",
+      "the trophy broke and the only replacement is a potato",
+      "the only person who knows the password is fast asleep",
+      "a small fib from yesterday keeps getting bigger and bigger",
+      "someone is trying to return a gift to the person who gave it",
+      "it is the grand opening and nothing is finished",
+      "a famous food critic is secretly in the room",
+      "the robot assistant has started making its own decisions",
+      "someone has to apologize for something they did not do",
+      "two birthday parties were booked in the same room",
+      "the instructions were written by a toddler",
+      "someone accidentally signed up to run a marathon tomorrow",
+      "the time machine only goes forward five minutes",
+      "the group must agree on one pizza topping",
+      "the prize money turns out to be Canadian Tire money",
+      "someone has to keep a straight face no matter what",
+      "the inspector arrives at the messiest possible moment",
+      "a wish came true, but not the way anyone wanted",
+      "someone has to teach a skill they learned five minutes ago",
+      "the treasure map leads somewhere that should not exist",
+      "everyone's phone switched to a language nobody speaks",
+      "someone needs a refund on a lamp that might be haunted",
+      "they must convince a moose to get off the road",
+      "they have to cross the room without waking the dog",
+      "the meeting is accidentally being broadcast live",
+      "a toddler has just been elected mayor",
+      "someone has to hide a surprise the size of an elephant",
+      "the big hockey game is tomorrow and the team has never skated",
+      "the cottage has been double-booked with another family",
+      "there is one Timbit left and six hungry people",
+      "they must find the owner of a very large lost duck",
+      "nobody can leave until they solve a riddle",
+      "someone has to explain a very strange noise to the neighbour",
+      "an important letter was delivered to the wrong house",
+      "they arrived at the right place on the wrong day",
+      "the class presentation is in one minute and the slides are gone",
+      "someone has to babysit a dragon egg that is about to hatch"
+    ]
+  },
+  twist: {
+    simple: [
+      "everyone must speak in rhyme",
+      "everyone has to whisper",
+      "one person can only answer with questions",
+      "everything happens in slow motion",
+      "everyone has a cold and keeps sneezing",
+      "someone sings every sentence",
+      "a pigeon becomes the leader",
+      "it turns out it was all a dream",
+      "everyone is suddenly very sleepy",
+      "everyone must talk like a pirate",
+      "gravity switches off for ten seconds",
+      "someone's grandmother walks in",
+      "everyone has to hop on one foot",
+      "the floor is lava",
+      "every sentence must start with the same letter",
+      "someone can only speak in sound effects",
+      "a TV camera crew shows up",
+      "everyone switches characters",
+      "everyone gets the giggles",
+      "it suddenly starts raining indoors",
+      "someone slowly turns into a robot",
+      "everyone talks like a sports announcer",
+      "the scene goes backwards",
+      "a moose wanders in",
+      "everyone freezes whenever someone claps",
+      "one person has to mime everything",
+      "everyone is extremely polite and keeps saying sorry",
+      "someone finds a winning Roll Up the Rim cup",
+      "everyone speaks like royalty at a fancy dinner",
+      "the scene turns into a musical",
+      "a surprise visitor arrives",
+      "everyone shrinks to the size of a mouse",
+      "everyone suddenly acts like a two-year-old",
+      "the lights go out and they must carry on in the dark",
+      "everyone turns into cats",
+      "someone forgets who they are",
+      "the scene becomes a commercial",
+      "they find out they are on a reality show",
+      "one character is secretly a superhero",
+      "the scene must end with a dance",
+      "every sentence must include the word “banana”",
+      "a hockey game breaks out",
+      "everyone narrates like a nature documentary",
+      "it is suddenly 100 years in the future",
+      "it is suddenly 100 years in the past",
+      "an alarm clock will not stop ringing",
+      "everyone gets superpowers",
+      "one person copies everything the other does",
+      "everyone can only use three-word sentences",
+      "a talking dog explains everything",
+      "nobody is allowed to stand up",
+      "it turns out they are all on the moon",
+      "the goose was behind it all along",
+      "it is extremely windy",
+      "someone narrates everything everyone does",
+      "everything is suddenly in super-fast motion",
+      "a marching band walks through",
+      "the scene ends with a group hug",
+      "everyone must end every sentence with “eh?”",
+      "everyone is wearing very heavy winter boots",
+      "someone keeps falling asleep mid-sentence"
+    ],
+    tricky: [
+      "every time someone sits down, the scene changes genre",
+      "the audience calls out a new emotion every fifteen seconds",
+      "one character only hears the last word of each sentence",
+      "nobody may say any word with the letter S",
+      "the scene is a news report from the year 3000",
+      "halfway through, everyone swaps characters",
+      "one character is secretly an alien and must hide it",
+      "every line must be shorter than the line before",
+      "the scene is replayed as a spooky mystery",
+      "everyone must speak in exactly five words",
+      "one character accidentally says their thoughts out loud",
+      "the scene repeats, faster each time",
+      "every time someone claps, the emotion changes",
+      "one character is a puppet moved by another actor",
+      "the scene must include a flashback",
+      "it turns out the problem was solved hours ago",
+      "one character has to agree with everything",
+      "nobody can use their hands",
+      "it is a silent film with a narrator",
+      "everyone must end each line with a question",
+      "one character only speaks in old sayings and proverbs",
+      "an invisible director keeps yelling “Cut! Again!”",
+      "the scene ends exactly where it began",
+      "one actor must play two characters at once",
+      "one character can only move while talking",
+      "each sentence starts with the next letter of the alphabet",
+      "the whole scene becomes an opera",
+      "one character speaks gibberish and another translates",
+      "they discover they are characters in a book",
+      "sad things are hilarious and funny things are sad",
+      "one character is extremely slow and the other extremely fast",
+      "someone must sneak a secret word into the conversation",
+      "start with the ending and work backwards",
+      "every time someone says “the”, they spin around",
+      "everyone whispers except one very loud person",
+      "it is revealed they have all been toys this whole time",
+      "one character can only use one-syllable words",
+      "it is a sports broadcast with play-by-play and colour commentary",
+      "one character keeps checking an imaginary rulebook",
+      "the scene freezes and each character tells the audience a secret thought",
+      "everything must be said as if it were a huge compliment",
+      "the scene is told as a bedtime story"
+    ]
+  }
+};
+
+const SLOTS = ["character", "setting", "problem", "twist"];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const state = {
+  level: "simple",
+  pair: false,
+  locked: { character: false, setting: false, problem: false, twist: false },
+  values: { character: null, setting: null, problem: null, twist: null },
+  bags: {}
+};
+
+function store(key, val) { try { localStorage.setItem(key, val); } catch (e) { /* ignore */ } }
+function load(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+
+function pool(slot) {
+  const b = BANKS[slot];
+  if (state.level === "simple") return b.simple;
+  if (state.level === "tricky") return b.tricky;
+  return b.simple.concat(b.tricky);
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* Shuffle-bag picking: no repeats until the whole bank has been used. */
+function draw(slot, exclude) {
+  const key = slot + ":" + state.level;
+  const all = pool(slot);
+  for (let tries = 0; tries < 3; tries++) {
+    if (!state.bags[key] || state.bags[key].length === 0) state.bags[key] = shuffle(all);
+    const bag = state.bags[key];
+    const idx = bag.findIndex(x => !exclude.includes(x));
+    if (idx !== -1) return bag.splice(idx, 1)[0];
+    state.bags[key] = [];
+  }
+  return all.find(x => !exclude.includes(x)) || all[0];
+}
+
+function current(slot) {
+  const v = state.values[slot];
+  return v ? [].concat(v) : [];
+}
+
+function pickFor(slot) {
+  const prev = current(slot);
+  if (slot === "character" && state.pair) {
+    const a = draw(slot, prev);
+    const b = draw(slot, prev.concat([a]));
+    return [a, b];
+  }
+  return draw(slot, prev);
+}
+
+/* =========================================================
+   RENDERING
+   ========================================================= */
+const el = {};
+SLOTS.forEach(s => {
+  const sec = document.querySelector('.slot[data-slot="' + s + '"]');
+  el[s] = {
+    section: sec,
+    body: sec.querySelector(".slot-body"),
+    lock: sec.querySelector(".lock-btn"),
+    respin: sec.querySelector(".respin-btn")
+  };
+});
+
+function setBody(slot, v) {
+  const body = el[slot].body;
+  body.textContent = "";
+  body.classList.toggle("pair", Array.isArray(v));
+  if (v == null) {
+    const d = document.createElement("div");
+    d.className = "value placeholder";
+    d.textContent = "Press Spin!";
+    body.appendChild(d);
+    return;
+  }
+  if (Array.isArray(v)) {
+    v.forEach((txt, i) => {
+      const d = document.createElement("div");
+      d.className = "value";
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = i === 0 ? "A" : "B";
+      d.appendChild(tag);
+      d.appendChild(document.createTextNode(capitalize(txt)));
+      body.appendChild(d);
+    });
+  } else {
+    const d = document.createElement("div");
+    d.className = "value";
+    d.textContent = capitalize(v);
+    body.appendChild(d);
+  }
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function renderLocks() {
+  SLOTS.forEach(s => {
+    const on = state.locked[s];
+    el[s].section.classList.toggle("locked", on);
+    el[s].lock.setAttribute("aria-pressed", String(on));
+    el[s].lock.textContent = on ? "🔒 LOCKED" : "🔓";
+    el[s].lock.title = on ? "Unlock this slot" : "Lock this slot";
+    el[s].respin.disabled = on;
+  });
+}
+
+/* Short "slot machine" roll before landing on the real pick. */
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const rolling = {};
+
+function spinSlots(slots) {
+  slots.forEach(slot => {
+    const finalVal = pickFor(slot);
+    state.values[slot] = finalVal;
+    if (rolling[slot]) clearInterval(rolling[slot]);
+    if (reduceMotion) { setBody(slot, finalVal); return; }
+    const all = pool(slot);
+    const rnd = () => all[Math.floor(Math.random() * all.length)];
+    let frames = 7;
+    el[slot].section.classList.add("rolling");
+    rolling[slot] = setInterval(() => {
+      if (--frames <= 0) {
+        clearInterval(rolling[slot]);
+        rolling[slot] = null;
+        el[slot].section.classList.remove("rolling");
+        setBody(slot, finalVal);
+      } else {
+        setBody(slot, Array.isArray(finalVal) ? [rnd(), rnd()] : rnd());
+      }
+    }, 55);
+  });
+}
+
+function spinAll() {
+  spinSlots(SLOTS.filter(s => !state.locked[s]));
+}
+
+function respin(slot) {
+  if (!state.locked[slot]) spinSlots([slot]);
+}
+
+/* =========================================================
+   CONTROLS
+   ========================================================= */
+document.getElementById("spinBtn").addEventListener("click", spinAll);
+
+SLOTS.forEach(s => {
+  el[s].respin.addEventListener("click", () => respin(s));
+  el[s].lock.addEventListener("click", () => {
+    state.locked[s] = !state.locked[s];
+    renderLocks();
+  });
+});
+
+document.querySelectorAll("[data-level]").forEach(btn => {
+  btn.addEventListener("click", () => setLevel(btn.dataset.level));
+});
+function setLevel(level) {
+  state.level = level;
+  document.querySelectorAll("[data-level]").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.level === level)));
+}
+
+const pairBtn = document.getElementById("pairBtn");
+pairBtn.addEventListener("click", togglePair);
+function togglePair() {
+  state.pair = !state.pair;
+  pairBtn.setAttribute("aria-pressed", String(state.pair));
+  const v = state.values.character;
+  if (state.pair && typeof v === "string") {
+    // keep the existing character as A and add a different B
+    state.values.character = [v, draw("character", [v])];
+    setBody("character", state.values.character);
+  } else if (!state.pair && Array.isArray(v)) {
+    state.values.character = v[0];
+    setBody("character", v[0]);
+  }
+}
+
+const themeBtn = document.getElementById("themeBtn");
+function applyTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "☀️ Light" : "🌙 Dark";
+  store("improv-theme", t);
+}
+themeBtn.addEventListener("click", () =>
+  applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"));
+applyTheme(load("improv-theme") === "light" ? "light" : "dark");
+
+/* =========================================================
+   TIMER
+   ========================================================= */
+const timer = { length: 60, remaining: 60, running: false, endAt: 0, tick: null };
+const timeDisplay = document.getElementById("timeDisplay");
+const startBtn = document.getElementById("startBtn");
+let audioCtx = null;
+
+function fmt(sec) {
+  const s = Math.max(0, Math.ceil(sec));
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+
+function renderTimer() {
+  timeDisplay.textContent = fmt(timer.remaining);
+  timeDisplay.classList.toggle("low", timer.remaining > 0 && timer.remaining <= 10);
+  startBtn.textContent = timer.running ? "⏸ Pause" : (timer.remaining <= 0 ? "▶ Again" : "▶ Start");
+}
+
+function ensureAudio() {
+  try {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  } catch (e) { audioCtx = null; }
+}
+
+function beep() {
+  if (!audioCtx) return;
+  try {
+    const t0 = audioCtx.currentTime;
+    [0, 0.35, 0.7].forEach((offset, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.value = i === 2 ? 1046 : 880;
+      const start = t0 + offset, dur = i === 2 ? 0.6 : 0.25;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.35, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(start);
+      osc.stop(start + dur + 0.05);
+    });
+  } catch (e) { /* audio unavailable */ }
+}
+
+function startTimer() {
+  ensureAudio();
+  if (timer.remaining <= 0) timer.remaining = timer.length;
+  timeDisplay.classList.remove("done");
+  timer.running = true;
+  timer.endAt = performance.now() + timer.remaining * 1000;
+  clearInterval(timer.tick);
+  timer.tick = setInterval(onTick, 200);
+  renderTimer();
+}
+
+function pauseTimer() {
+  timer.remaining = Math.max(0, (timer.endAt - performance.now()) / 1000);
+  timer.running = false;
+  clearInterval(timer.tick);
+  renderTimer();
+}
+
+function resetTimer() {
+  timer.running = false;
+  clearInterval(timer.tick);
+  timer.remaining = timer.length;
+  timeDisplay.classList.remove("done");
+  renderTimer();
+}
+
+function onTick() {
+  timer.remaining = (timer.endAt - performance.now()) / 1000;
+  if (timer.remaining <= 0) {
+    timer.remaining = 0;
+    timer.running = false;
+    clearInterval(timer.tick);
+    timeDisplay.classList.add("done");
+    beep();
+  }
+  renderTimer();
+}
+
+function toggleTimer() { timer.running ? pauseTimer() : startTimer(); }
+
+startBtn.addEventListener("click", toggleTimer);
+document.getElementById("resetBtn").addEventListener("click", resetTimer);
+document.querySelectorAll("[data-secs]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    timer.length = Number(btn.dataset.secs);
+    document.querySelectorAll("[data-secs]").forEach(b =>
+      b.setAttribute("aria-pressed", String(b === btn)));
+    resetTimer();
+  });
+});
+renderTimer();
+
+/* =========================================================
+   KEYBOARD SHORTCUTS
+   ========================================================= */
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const tag = (e.target && e.target.tagName) || "";
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+  const k = e.key.toLowerCase();
+  if (e.code === "Space" || k === " ") {
+    e.preventDefault();          // stop page scroll and focused-button "click"
+    if (!e.repeat) spinAll();
+  } else if (k === "t") {
+    if (!e.repeat) toggleTimer();
+  } else if (k === "r") {
+    resetTimer();
+  } else if (k === "p") {
+    togglePair();
+  } else if (k === "l") {
+    themeBtn.click();
+  } else if (["1", "2", "3", "4"].includes(k)) {
+    respin(SLOTS[Number(k) - 1]);
+  }
+});
+// Space on a focused button fires its click on keyup; block it so Space only spins.
+document.addEventListener("keyup", e => {
+  if (e.code === "Space" && e.target && e.target.tagName === "BUTTON") e.preventDefault();
+});
+// Mouse clicks shouldn't leave focus on a button (keeps Space/T predictable).
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("button");
+  if (b && e.detail > 0) b.blur();
+});
+
+renderLocks();
+</script>
+</body>
+</html>
